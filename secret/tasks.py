@@ -8,16 +8,6 @@ from secret.models import Secret
 
 
 @shared_task
-def delete_after_view(pk: str):
-    """
-    Deletes the secret after reading
-    """
-
-    secret = Secret.objects.filter(pk=pk).first()
-    secret.delete()
-
-
-@shared_task
 def delete_after_lifetime():
     """
     Deletes the secret after the expiration date

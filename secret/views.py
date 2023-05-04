@@ -10,7 +10,6 @@ from config import settings
 from secret.models import Secret
 from secret.serializers import SecretSerializer
 from secret.services import encrypt, decrypt
-from secret.tasks import delete_after_view
 
 
 class SecretCreateAPIView(generics.CreateAPIView):
@@ -60,7 +59,7 @@ class SecretCreateAPIView(generics.CreateAPIView):
         serializer.save(delete_data=delete_data)
 
 
-class SecretRetrieveAPIView(generics.RetrieveAPIView):
+class SecretDestroyAPIView(generics.DestroyAPIView):
     """
     Controller for read a secret
     """
@@ -68,30 +67,30 @@ class SecretRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = SecretSerializer
     queryset = Secret.objects.all()
 
-    def get(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         """
         The method must accept the required parameter "key"
         """
         key = request.data.get('key')
         if key is None:
             raise AttributeError('The "key" attribute must be passed')
-        return self.retrieve(request, key, *args, **kwargs)
+        return self.destroy(request, *args, **kwargs)
 
-    def retrieve(self, request, key=None, *args, **kwargs):
-        """
-        The method compares the "key" parameter, returns the decrypted phrase and deletes it from the database
-        """
-
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        if key:
-            if check_password(key, serializer.data.get('key')):
+        if request.data.get('key'):
+            if check_password(request.data.get('key'), instance.key):
                 answer = Response({'answer': 'Confirmed',
-                                  'phrases': decrypt(serializer.data.get('phrases'))})
-                delete_after_view.delay(serializer.data.get('uuid'))
+                                  'phrases': decrypt(instance.phrases)})
+                self.perform_destroy(instance)
                 return answer
-            return Response({'answer': 'The keyword does not match',
-                             'phrases': None}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'answer': 'The keyword does not match', 'phrases': None},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'answer': 'The "key" argument is omitted', 'phrases': None},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
