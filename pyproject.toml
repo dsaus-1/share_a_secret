@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "secret"
+version = "0.1.0"
+description = ""
+authors = ["dsaus <saushkin.reg@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+django = "3.2"
+djangorestframework = "3.14"
+python-dotenv = "0.21"
+psycopg2-binary = ">=2.9"
+drf-yasg = ">=1.21"
+django-celery-beat = "^2.5.0"
+celery = "^5.2.7"
+redis = "^4.5.4"
+cryptography = "^40.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

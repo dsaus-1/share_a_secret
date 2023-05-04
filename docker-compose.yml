@@ -1,0 +1,62 @@
+version: "3.18"
+
+services:
+  db:
+    image: postgres
+    container_name: postgres
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - .:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+
+  redis:
+    container_name: redis
+    image: redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+
+  api:
+    container_name: api
+    build:
+      context: .
+    tty: false
+    volumes:
+      - .:/code
+    restart: on-failure
+    ports:
+      - "8000:8000"
+    links:
+      - redis
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
+    command: bash -c "python manage.py migrate --noinput"
+
+#  celery-worker:
+#    container_name: celery-worker
+#    command: bash -c "python3 manage.py check_lifetime & celery -A config worker -l info"
+#    depends_on:
+#      db:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#
+#  celery-beat:
+#    container_name: celery-beat
+#    command: celery -A config beat -l info -S django
+#    depends_on:
+#      celery-worker:
+#        condition: service_started
+
