@@ -26,7 +26,7 @@ services:
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
 
-  api:
+  api: &api
     container_name: api
     build:
       context: .
@@ -42,21 +42,23 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: bash -c "python manage.py migrate --noinput"
+    command: bash -c "python manage.py migrate --noinput & python manage.py runserver 0.0.0.0:8000"
 
-#  celery-worker:
-#    container_name: celery-worker
-#    command: bash -c "python3 manage.py check_lifetime & celery -A config worker -l info"
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
-#
-#  celery-beat:
-#    container_name: celery-beat
-#    command: celery -A config beat -l info -S django
-#    depends_on:
-#      celery-worker:
-#        condition: service_started
+  celery-worker:
+    container_name: celery-worker
+    build: .
+    command: bash -c "python3 manage.py check_lifetime & celery -A config worker -l info"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    container_name: celery-beat
+    build: .
+    command: celery -A config beat -l info -S django
+    depends_on:
+      celery-worker:
+        condition: service_started
 
