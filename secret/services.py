@@ -14,9 +14,9 @@ def encrypt(txt: str or int) -> str:
     # get the key from settings
     cipher_suite = Fernet(settings.ENCRYPT_KEY) # key should be byte
     # #input should be byte, so convert the text to byte
-    encrypted_text = cipher_suite.encrypt(txt.encode('ascii'))
+    encrypted_text = cipher_suite.encrypt(txt.encode('utf8'))
     # encode to urlsafe base64 format
-    encrypted_text = base64.urlsafe_b64encode(encrypted_text).decode("ascii")
+    encrypted_text = base64.urlsafe_b64encode(encrypted_text).decode('utf8')
     return encrypted_text
 
 
@@ -28,5 +28,5 @@ def decrypt(string: str) -> str:
     # base64 decode
     txt = base64.urlsafe_b64decode(string)
     cipher_suite = Fernet(settings.ENCRYPT_KEY)
-    decoded_text = cipher_suite.decrypt(txt).decode("ascii")
+    decoded_text = cipher_suite.decrypt(txt).decode('utf8')
     return decoded_text
